@@ -1,6 +1,7 @@
 use std::fmt::Debug;
+use std::usize::MAX;
 
-pub fn move_pivot_idx<T: PartialOrd + Debug>(
+pub fn move_pivot<T: PartialOrd + Debug>(
     vector: &mut Vec<T>,
     pivot_idx: usize,
     start_idx: usize,
@@ -30,7 +31,7 @@ pub fn move_pivot_idx<T: PartialOrd + Debug>(
             end_idx, input_length
         ))
     }
-    if start_idx >= pivot_idx {
+    if start_idx > pivot_idx {
         panic!(format!(
             "Error: Could not set lower pivot boundary by index '{:?}'. Value is greater or equal than pivot index '{:?}'",
             start_idx, pivot_idx
@@ -43,13 +44,16 @@ pub fn move_pivot_idx<T: PartialOrd + Debug>(
         ))
     }
 
-    let mut lower_than_idx: usize = start_idx;
+    let mut lower_than_idx: usize = MAX;
     for idx in start_idx..end_idx - 1 {
         if idx == pivot_idx {
             continue;
         };
         if vector[idx] < vector[pivot_idx] {
-            if idx != start_idx {
+            // at this time unchecked_add is nightly, so check done manually
+            if lower_than_idx == MAX {
+                lower_than_idx = 0;
+            } else {
                 lower_than_idx += 1;
             }
             if lower_than_idx != idx {
@@ -60,6 +64,7 @@ pub fn move_pivot_idx<T: PartialOrd + Debug>(
     }
     lower_than_idx += 1;
     vector.swap(pivot_idx, lower_than_idx);
+    println!("vector {:?}", vector);
     return lower_than_idx;
 }
 
@@ -68,11 +73,12 @@ mod tests {
     #[test]
     fn test_move_pivot() {
         use super::*;
-        let mut vector = vec![1, 3, 55, 7, 5, 100, 6, 41, 0, 2, 4];
+        let mut vector = vec![100, 3, 55, 7, 5, 1, 6, 41, 0, 2, 4];
         let vector_length = vector.len();
         let pivot_idx = 9; // element 2
         let pivot = vector[pivot_idx];
-        move_pivot_idx(&mut vector, pivot_idx, 0, vector_length);
+        move_pivot(&mut vector, pivot_idx, 0, vector_length);
+        assert_eq!(vector, vec![100, 3, 55, 7, 5, 1, 6, 41, 0, 2, 4]);
         for idx in 0..vector_length {
             // println!("idx: {:?}, pivot: {:?}, vector[idx]: {:?}",idx, pivot, vector[idx]);
             assert!((vector[idx] < pivot) == (idx < pivot));
