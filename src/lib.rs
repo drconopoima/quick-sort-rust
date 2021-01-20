@@ -51,11 +51,7 @@ pub fn move_pivot<T: PartialOrd>(
         };
         if vector[idx] < vector[pivot_idx] {
             // at this time unchecked_add is nightly, so check done manually
-            if lower_than_idx == MAX {
-                lower_than_idx = 0;
-            } else {
-                lower_than_idx += 1;
-            }
+            lower_than_idx = lower_than_idx.wrapping_add(1);
             if lower_than_idx != idx {
                 vector.swap(lower_than_idx, idx);
                 if pivot_idx == lower_than_idx {
@@ -65,11 +61,7 @@ pub fn move_pivot<T: PartialOrd>(
             }
         };
     }
-    if lower_than_idx == MAX {
-        lower_than_idx = 0;
-    } else {
-        lower_than_idx += 1;
-    }
+    lower_than_idx = lower_than_idx.wrapping_add(1);
     vector.swap(pivot_idx, lower_than_idx);
     // println!("vector {:?}", vector);
     // println!("return_index {:?}", lower_than_idx);
