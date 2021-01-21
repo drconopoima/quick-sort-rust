@@ -2,9 +2,11 @@ use std::num::Wrapping;
 /// Pseudo-random number generator based on Lehmer algorithm
 /// Source https://lemire.me/blog/2019/03/19/the-fastest-conventional-random-number-generator-that-can-pass-big-crush/
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 lazy_static::lazy_static! {
-    static ref RG: Mutex<RandGen> = Mutex::new(RandGen::new(34052));
+    static ref RG: Mutex<RandGen> = Mutex::new(RandGen::new(SystemTime::now().duration_since(UNIX_EPOCH)
+    .expect("Error: Failed to get current time as duration from epoch.").as_millis() as usize));
 }
 
 pub fn rand(max: usize) -> usize {
