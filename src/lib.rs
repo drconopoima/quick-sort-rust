@@ -1,5 +1,5 @@
-use rand::Rng;
 use std::usize::MAX;
+mod random_generator;
 
 pub fn move_pivot<T: PartialOrd>(
     vector: &mut [T],
@@ -73,8 +73,7 @@ pub fn quick_sort<T: PartialOrd>(vector: &mut [T]) {
     if input_length <= 1 {
         return;
     }
-    let mut rng = rand::thread_rng();
-    let initial_pivot = rng.gen_range(0..input_length);
+    let initial_pivot = random_generator::rand(input_length);
     let pivot = move_pivot(vector, initial_pivot, 0, input_length);
     let (a, b) = vector.split_at_mut(pivot);
     quick_sort(a);
@@ -116,14 +115,19 @@ mod tests {
     fn random_sort() {
         use super::*;
         use rand::distributions::Uniform;
+        use rand::Rng;
+        // use std::time::SystemTime;
         let mut rng = rand::thread_rng();
         let range = Uniform::new(0, 20);
         let random_vector: Vec<usize> = (0..100).map(|_| rng.sample(&range)).collect();
         let mut quick_sorted = random_vector.clone();
         let mut std_sorted = random_vector.clone();
         std_sorted.sort();
-        // std_sorted.push(1000);
+        // let time_now = SystemTime::now();
+        // let elapsed = time_now.elapsed().expect("Error: Failed to get elapsed time.").as_nanos();
+        // println!("Elapsed time: {:?} nanoseconds", elapsed);
         quick_sort(&mut quick_sorted);
-        assert_eq!(quick_sorted, std_sorted)
+        assert_eq!(std_sorted, quick_sorted);
+        // panic!()
     }
 }
