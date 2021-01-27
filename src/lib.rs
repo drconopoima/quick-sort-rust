@@ -80,6 +80,32 @@ pub fn quick_sort<T: PartialOrd>(vector: &mut [T]) {
     quick_sort(&mut b[1..])
 }
 
+struct RawSend<T>(*mut [T]);
+
+unsafe impl<T> Send for RawSend<T> {}
+
+pub fn threaded_quick_sort<T: 'static + Send + PartialOrd>(vector: &mut [T]) {
+    let input_length = vector.len();
+    if vector.len() <= 1 {
+        return;
+    }
+    let initial_pivot = random_generator::rand(input_length);
+    let pivot = move_pivot(vector, initial_pivot, 0, input_length);
+    let (a, b) = vector.split_at_mut(pivot);
+
+    let raw_a: *mut [T] = a as *mut [T];
+    let send_a = RawSend(raw_a);
+
+    unsafe {
+        let handle = std::thread::spawn(move || {
+            threaded_quick_sort(&mut *send_a.0);
+        });
+
+        threaded_quick_sort(&mut b[1..]);
+        handle.join().ok();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -101,6 +127,13 @@ mod tests {
         use super::*;
         let mut vector = vec![1, 3, 55, 7, 5, 100, 6, 41, 0, 2, 4];
         quick_sort(&mut vector);
+        assert_eq!(vector, vec![0, 1, 2, 3, 4, 5, 6, 7, 41, 55, 100]);
+    }
+    #[test]
+    fn test_threaded_quick_sort() {
+        use super::*;
+        let mut vector = vec![1, 3, 55, 7, 5, 100, 6, 41, 0, 2, 4];
+        threaded_quick_sort(&mut vector);
         assert_eq!(vector, vec![0, 1, 2, 3, 4, 5, 6, 7, 41, 55, 100]);
     }
     #[test]
