@@ -1,3 +1,4 @@
+use rayon;
 use std::usize::MAX;
 mod random_generator;
 
@@ -86,7 +87,7 @@ unsafe impl<T> Send for RawSend<T> {}
 
 pub fn threaded_quick_sort<T: 'static + Send + PartialOrd>(vector: &mut [T]) {
     let input_length = vector.len();
-    if vector.len() <= 1 {
+    if input_length <= 1 {
         return;
     }
     let initial_pivot = random_generator::rand(input_length);
@@ -100,10 +101,21 @@ pub fn threaded_quick_sort<T: 'static + Send + PartialOrd>(vector: &mut [T]) {
         let handle = std::thread::spawn(move || {
             threaded_quick_sort(&mut *send_a.0);
         });
-
         threaded_quick_sort(&mut b[1..]);
         handle.join().ok();
     }
+}
+
+pub fn quick_sort_rayon<T: Send + PartialOrd>(vector: &mut [T]) {
+    let input_length = vector.len();
+    if input_length <= 1 {
+        return;
+    }
+    let initial_pivot = random_generator::rand(input_length);
+    let pivot = move_pivot(vector, initial_pivot, 0, input_length);
+    let (a, b) = vector.split_at_mut(pivot);
+
+    rayon::join(|| quick_sort_rayon(a), || quick_sort_rayon(&mut b[1..]));
 }
 
 #[cfg(test)]
@@ -134,6 +146,13 @@ mod tests {
         use super::*;
         let mut vector = vec![1, 3, 55, 7, 5, 100, 6, 41, 0, 2, 4];
         threaded_quick_sort(&mut vector);
+        assert_eq!(vector, vec![0, 1, 2, 3, 4, 5, 6, 7, 41, 55, 100]);
+    }
+    #[test]
+    fn test_rayon_quick_sort() {
+        use super::*;
+        let mut vector = vec![1, 3, 55, 7, 5, 100, 6, 41, 0, 2, 4];
+        quick_sort_rayon(&mut vector);
         assert_eq!(vector, vec![0, 1, 2, 3, 4, 5, 6, 7, 41, 55, 100]);
     }
     #[test]

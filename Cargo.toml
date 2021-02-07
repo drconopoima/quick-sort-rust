@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 lazy_static = "1.4.0"
 rand = "0.8.2"
+rayon = "1.5.0"
